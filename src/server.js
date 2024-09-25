@@ -1,17 +1,20 @@
 const express = require('express');
 require('dotenv').config();
 const { ApolloServer } = require('apollo-server-express');
-const userSchema = require('./modules/user/models/user');
+const userSchema = require('./modules/user/graphQL/userSchema');
 const userResolvers = require('./modules/user/controllers/userController');
 const vehicleSchema = require('./modules/vehicle/models/vehicle');
-const vehicleResolvers = require('./modules/vehicle/repositories/vehicleRepository');
+const {vehicleResolvers} = require('./modules/vehicle/controllers/vehicleController');
 const app = express();
+// const imageRoutes = require('../src/routes/route');
+
 
 const cors = require('cors');
 app.use(cors());
+// app.use('/api', imageRoutes);
 
-const typeDefs = [userSchema, vehicleSchema];
-const resolvers = [userResolvers, vehicleResolvers];
+const typeDefs = [userSchema.typeDefs, vehicleSchema];
+const resolvers = [userSchema.resolvers, vehicleResolvers];
 
 // Create Apollo Server
 const server = new ApolloServer({ typeDefs, resolvers });
