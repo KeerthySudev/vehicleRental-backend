@@ -2,6 +2,9 @@ const { gql } = require('apollo-server-express');
 
 
 const user = gql`
+
+scalar Upload
+
   type User {
     id: ID!
     name: String!
@@ -42,6 +45,19 @@ const user = gql`
     state: String!
     country: String!
     pincode: String!
+  }
+
+  type UserTest {
+    id: ID!
+    name: String!
+    email: String!
+  }
+
+  type Image {
+    id: ID!
+    name: String!
+    path: String!
+    extraPath : String
   }
 `;
 

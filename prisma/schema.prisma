@@ -1,0 +1,41 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// model User {
+//   id      Int      @id @default(autoincrement())
+//   name    String
+//   email   String   @unique
+//  }
+
+// model Image {
+//  id   Int    @id @default(autoincrement())
+//  name String
+//  path String @unique
+//  extraPath String?
+// }
+
+
+model Vehicle {
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String
+  price         Float
+  primaryImage  String   // Path to primary image
+  secondaryImage   String
+  availableQty  Int
+  manufacture     String   // Manufacture should be chosen from a predefined set of values
+  model           String   // Model of the vehicle
+}
+

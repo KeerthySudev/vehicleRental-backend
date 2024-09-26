@@ -2,19 +2,18 @@ const express = require('express');
 require('dotenv').config();
 const { ApolloServer } = require('apollo-server-express');
 const userSchema = require('./modules/user/graphQL/userSchema');
-const userResolvers = require('./modules/user/controllers/userController');
-const vehicleSchema = require('./modules/vehicle/models/vehicle');
-const {vehicleResolvers} = require('./modules/vehicle/controllers/vehicleController');
+const vehicleSchema = require('./modules/vehicle/graphQL/vehicleSchema');
 const app = express();
-// const imageRoutes = require('../src/routes/route');
+const { graphqlUploadExpress } = require('graphql-upload');
 
 
 const cors = require('cors');
 app.use(cors());
-// app.use('/api', imageRoutes);
+// app.use(graphqlUploadExpress());
+app.use(graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
 
-const typeDefs = [userSchema.typeDefs, vehicleSchema];
-const resolvers = [userSchema.resolvers, vehicleResolvers];
+const typeDefs = [userSchema.typeDefs, vehicleSchema.typeDefs];
+const resolvers = [userSchema.resolvers, vehicleSchema.resolvers];
 
 // Create Apollo Server
 const server = new ApolloServer({ typeDefs, resolvers });

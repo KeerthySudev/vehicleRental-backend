@@ -1,5 +1,4 @@
 const { gql } = require('apollo-server-express');
-const user = require('../models/user');
 
 
 const userMutations = gql`
@@ -11,6 +10,8 @@ const userMutations = gql`
       customerInput: CustomerInput
     ): Customer
     login(email: String!, password: String!): LoginResponse!
+    addUserTest(name: String!, email: String!): UserTest
+    uploadImageTest(name: String!, file: Upload!, extraFile: Upload!): Image!
   } 
 `;
 
