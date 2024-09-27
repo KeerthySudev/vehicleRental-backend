@@ -4,9 +4,6 @@ const vehicleService = require('../../repositories/vehicleRepository');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const mime = require('mime-types');
-
-const { createWriteStream } = require('fs');
-const path = require('path');
 const  minioClient  = require('../../../../configs/minioConfig');
 
 const saveImageToDB = async ({ name, description, price,  primaryImage, secondaryImage, availableQty, manufacture, model }) => {
@@ -40,52 +37,9 @@ const vehicleResolvers = {
     },
     Mutation: {
 
-      // addVehicle: async (_, { name, description, price,  primary_image, available_quantity }) => {
-      //   try {
-      //     console.log("name",name);
-      //     console.log("file",primary_image);
-      //     // Upload primary image to MinIO
-      //     const primaryImagePath = await vehicleService.uploadVehicleImage(primary_image, 'vehicle-images', `${name}_primary`);
-  
-      //     // Save vehicle details in the database
-      //     const result = await vehicleService.addVehicle(name, description, price, primaryImagePath, available_quantity);
-  
-      //     return result; // Return the saved vehicle details
-      //   } catch (error) {
-      //     console.error("Error adding vehicle:", error);
-      //     throw new Error("Failed to add vehicle");
-      //   }
-      // },
-
-      // addVehicle: async (_, { name, description, price, primary_image, other_images, available_quantity }) => {
-      //   return await vehicleService.addVehicle(name, description, price, primary_image, other_images, available_quantity);
-      // },
-
       addVehicle: async (_, { name, description, price,  available_quantity }) => {
         return await vehicleService.addVehicle(name, description, price,  available_quantity);
       },
-
-      // addVehicle: async (_, { name, description, price, primary_image_path, other_images_paths, available_quantity }) => {
-        // try {
-        //   // Upload primary image to MinIO
-        //   const primaryImageUpload = await fileService.uploadVehicleImage(primary_image_path, 'vehicle-images', `${name}_primary`);
-  
-        //   // Upload other images to MinIO
-        //   const otherImagesUploads = await Promise.all(
-        //     other_images_paths.map(imagePath => 
-        //       fileService.uploadVehicleImage(imagePath, 'vehicle-images', `${name}_${imagePath}`)
-        //     )
-        //   );
-  
-        //   // Save vehicle details in the database
-        //   const result = await vehicleService.addVehicle(name, description, price, primaryImageUpload, otherImagesUploads, available_quantity);
-  
-        //   return result; // Return the saved vehicle details
-        // } catch (error) {
-        //   console.error("Error adding vehicle:", error);
-        //   throw new Error("Failed to add vehicle");
-        // }
-      // },
 
       updateVehicle: async (_, { id, name, description, price, primary_image, other_images, available_quantity }) => {
         return await vehicleService.updateVehicle(id, name, description, price, primary_image, other_images, available_quantity);

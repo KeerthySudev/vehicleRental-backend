@@ -7,10 +7,7 @@ const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const mime = require('mime-types');
-
 const { GraphQLUpload } = require('graphql-upload');
-const { createWriteStream } = require('fs');
-const path = require('path');
 const  minioClient  = require('../../../../configs/minioConfig');
 
 const saveImageToDB = async ({ name, path, extraPath }) => {

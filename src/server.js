@@ -9,7 +9,6 @@ const { graphqlUploadExpress } = require('graphql-upload');
 
 const cors = require('cors');
 app.use(cors());
-// app.use(graphqlUploadExpress());
 app.use(graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
 
 const typeDefs = [userSchema.typeDefs, vehicleSchema.typeDefs];

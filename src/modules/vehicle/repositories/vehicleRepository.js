@@ -1,9 +1,6 @@
 
 const pool = require('../../../configs/dbConfig');
 const minioClient = require('../../../configs/minioConfig');
-const fs = require('fs');
-const path = require('path');
-const streamToBuffer = require('stream-to-buffer');
 
 const getAllVehicles = async () => {
   const result = await pool.query('SELECT * FROM vehicles');
@@ -14,14 +11,6 @@ const getVehicleById = async (id) => {
   const result = await pool.query('SELECT * FROM vehicles WHERE id = $1', [id]);
   return result.rows[0];
 };
-
-// const addVehicle = async (name, description, price, primary_image, other_images, available_quantity) => {
-//   const result = await pool.query(
-//     'INSERT INTO vehicles (name, description, price, primary_image, other_images, available_quantity) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-//     [name, description, price, primary_image, other_images, available_quantity]
-//   );
-//   return result.rows[0];
-// };
 
 const addVehicle = async (name, description, price,  available_quantity) => {
   const result = await pool.query(
@@ -43,18 +32,6 @@ const deleteVehicle = async (id) => {
   await pool.query('DELETE FROM vehicles WHERE id = $1', [id]);
   return `Vehicle with ID ${id} deleted.`;
 };
-
-// const uploadVehicleImage = async (filePath, bucketName, objectName) => {
-//   try {
-//     await minioClient.fPutObject(bucketName, objectName, filePath, {
-//       'Content-Type': 'image/jpeg', // Adjust according to the file type
-//     });
-//     console.log('File uploaded successfully.');
-//   } catch (error) {
-//     console.error('Error uploading file:', error);
-//     throw error;
-//   }
-// };
 
 const uploadVehicleImage = async (fileStream, bucketName, objectName) => {
   try {
