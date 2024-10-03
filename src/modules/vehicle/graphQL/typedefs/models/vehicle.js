@@ -2,25 +2,22 @@ const { gql } = require('apollo-server-express');
 
 const vehicle = gql`
 
-  type VehicleX {
-    id: ID!
-    name: String!
-    description: String!
-    price: Float!
-    primary_image: String
-    other_images: [String]
-    available_quantity: Int!
-  }
-
-  type VehicleTest {
-    id: ID!
-    name: String!
-    description: String!
-    price: Float!
-    available_quantity: Int!
-  }
-
   scalar Upload
+
+  type Manufacturer {
+    id: ID!
+    name: String!
+    image: String
+    models: [Model!]!  # Relation to Model
+    vehicles: [Vehicle!]!  # Relation to Vehicle
+  }
+  
+  type Model {
+    id: ID!
+    name: String!
+    manufacturer: Manufacturer!  # Relation to Manufacturer
+    vehicles: [Vehicle!]!  # Relation to Vehicle
+  }
   
   type Vehicle {
     id: ID!
@@ -28,14 +25,13 @@ const vehicle = gql`
     description: String!
     price: Float!
     primaryImage: String!
-    secondaryImage: String!
+    secondaryImage: String
     availableQty: Int!
-    manufacture: String!
-    model: String!
+    isRentable: Boolean!
+    manufacturer: Manufacturer!  # Relation to Manufacturer
+    model: Model!  # Relation to Model
   }
-
-
-
+  
 `;
 
 module.exports = vehicle;

@@ -19,23 +19,72 @@ datasource db {
 //   email   String   @unique
 //  }
 
-// model Image {
-//  id   Int    @id @default(autoincrement())
-//  name String
-//  path String @unique
-//  extraPath String?
-// }
-
+model Customer {
+  id        Int   @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  phone     String   @unique
+  city      String
+  state     String
+  country   String
+  pincode   String
+  password  String
+  image     String?
+  role      String   @default("user")
+  bookings   Booking[]
+}
 
 model Vehicle {
-  id            Int      @id @default(autoincrement())
-  name          String
-  description   String
-  price         Float
-  primaryImage  String   // Path to primary image
-  secondaryImage   String
-  availableQty  Int
-  manufacture     String   // Manufacture should be chosen from a predefined set of values
-  model           String   // Model of the vehicle
+  id             Int           @id @default(autoincrement())
+  name           String
+  description    String
+  price          Float
+  primaryImage   String        // Path to primary image
+  secondaryImage String?
+  isRentable     Boolean        @default(false)
+  availableQty   Int
+  manufacturer   Manufacturer  @relation(fields: [manufacturerId], references: [id], onDelete: Cascade)
+  manufacturerId Int
+  model          Model         @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  modelId        Int
+  bookings   Booking[]
 }
+
+model Manufacturer {
+  id       Int       @id @default(autoincrement())
+  name     String
+  image    String
+  vehicles Vehicle[] // This field creates the reverse relation to Vehicle
+  models   Model[]   // This field creates the reverse relation to Model
+}
+
+model Model {
+  id             Int           @id @default(autoincrement())
+  name           String
+  manufacturer   Manufacturer   @relation(fields: [manufacturerId], references: [id], onDelete: Cascade)
+  manufacturerId Int
+  vehicles       Vehicle[]
+}
+
+model Booking {
+  id               Int       @id @default(autoincrement())
+  startDate        DateTime
+  endDate          DateTime
+  status           String
+  pickUp           String
+  dropOff          String
+  paymentStatus    String    @default("pending")
+  amount           Float     
+  razorpayPaymentId  String?  
+  razorpaySignature  String? 
+  vehicle          Vehicle   @relation(fields: [vehicleId], references: [id])
+  vehicleId        Int
+  customer         Customer  @relation(fields: [customerId], references: [id])
+  customerId       Int
+  createdAt        DateTime  @default(now())
+}
+
+
+
+
 

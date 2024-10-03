@@ -2,12 +2,16 @@ const { gql } = require('apollo-server-express');
 
 
 const vehicleQueries = gql`
+
 extend type Query {
-  vehicles: [VehicleTest]
-  vehicle(id: ID!): VehicleTest
-  images: [Image]
+  getAllManufacturers: [Manufacturer!]!
+  getManufacturerById(id: ID!): Manufacturer
+  getAllModels: [Model!]!
+  getModelById(id: ID!): Model
+  getModelsByManufacturer(manufacturerId: Int!): [Model!]!
   getAllVehicles: [Vehicle!]!
-  getVehicleById(id: ID!): Vehicle
+  getAllRentableVehicles: [Vehicle!]!
+  getVehicleById(id: Int!): Vehicle
 }
 `;
 

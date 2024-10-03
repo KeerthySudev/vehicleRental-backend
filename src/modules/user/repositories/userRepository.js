@@ -1,9 +1,6 @@
 const pool = require("../../../configs/dbConfig");
-
-const getAllUsers = async () => {
-  const result = await pool.query("SELECT * FROM users");
-  return result.rows;
-};
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 const getAllCustomers = async () => {
   const result = await pool.query("SELECT * FROM customers");
@@ -11,8 +8,13 @@ const getAllCustomers = async () => {
 };
 
 const getCustomer = async (email) => {
-  const result = await pool.query('SELECT * FROM customers WHERE email = $1', [email]);
-    return result.rows[0];
+  const customer = await prisma.customer.findUnique({
+    where: {
+      email: email,
+    },
+  })
+  
+  return customer
 };
 
 const addUser = async (name) => {
@@ -37,25 +39,24 @@ const deleteUser = async (id) => {
 };
 
 const registerCustomer = async (customerInput,hashedPassword) => {
-  const result = await pool.query(
-    'INSERT INTO customers (name, email, phone, city, state, country, pincode, password) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-    [
-      customerInput.name,
-      customerInput.email,
-      customerInput.phone,
-      customerInput.city,
-      customerInput.state,
-      customerInput.country,
-      customerInput.pincode,
-      hashedPassword,
-    ]
-  );
+  const customer = await prisma.customer.create({
+    data: {
+      name: customerInput.name,
+      email: customerInput.email,
+      phone: customerInput.phone,
+      city: customerInput.city,
+      state: customerInput.state,
+      country: customerInput.country,
+      pincode: customerInput.pincode,
+      password: hashedPassword,
+      role: "user",
+    },
+  })
 
-  return result.rows[0];
+  return customer
 };
 
 module.exports = {
-  getAllUsers,
   getAllCustomers,
   getCustomer,
   addUser,

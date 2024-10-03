@@ -7,101 +7,72 @@ const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const mime = require('mime-types');
-const { GraphQLUpload } = require('graphql-upload');
 const  minioClient  = require('../../../../configs/minioConfig');
-
-const saveImageToDB = async ({ name, path, extraPath }) => {
-  // Assuming you have a Prisma client instance already initialized
-  const newImage = await prisma.image.create({
-    data: {
-      name,
-      path, 
-      extraPath,
-    },
-  });
-  return newImage;
-};
 
 
 // Define resolvers for your schema
 const userResolvers = {
-  Upload: GraphQLUpload,
   Query: {
-    usersTest: async () => {
-        return await prisma.user.findMany();
-      },
-      getImage: async (_, { id }) => {
-        return await prisma.image.findById(id); // Fetch image from the database by ID
-      },
-      getAllImages: async () => {
-        return await prisma.image.findMany(); // Fetch all images from the database
-      },
-    users: async () => {
-        return await userService.getAllUsers();
-      
-    },
     customers: async () => {
       return await userService.getAllCustomers();
     
   },
-  customer: async (_, { email }) => {
-    return await userService.getCustomer(email);
+  customer: async (_, { id }) => {
+    return await prisma.customer.findUnique({
+      where: { id },
+    });
     
   },
   },
     Mutation: {
-        addUserTest: async (_, { name, email }) => {
-          
-            return await prisma.user.create({
-              data: {
-                name,
-                email,
-              },
-            });
-          },
-          uploadImageTest: async (_, { name, file, extraFile }) => {
-            const { createReadStream: createReadStream1, filename: filename1 } = await file;
-      
-            // Upload file to MinIO
-            const stream1 = createReadStream1();
-            const mimeType1 = mime.contentType(filename1);
-      
-            // Upload to MinIO
-            await minioClient.putObject('vehicle-images', filename1, stream1, {
-              'Content-Type': mimeType1 || 'application/octet-stream', // Adjust as needed
-            });
-      
-            // Save the image path and name to the database
+      updateCustomer: async (_, { id, data, imageFile }) => {
 
-            const path = await minioClient.presignedGetObject('vehicle-images', filename1);
-
-            const { createReadStream: createReadStream2, filename: filename2 } = await extraFile;
-      
-            // Upload file to MinIO
-            const stream2 = createReadStream2();
-            const mimeType2 = mime.contentType(filename2);
-      
-            // Upload to MinIO
-            await minioClient.putObject('vehicle-images', filename2, stream2, {
-              'Content-Type': mimeType2 || 'application/octet-stream', // Adjust as needed
-            });
-      
-            // Save the image path and name to the database
-
-            const extraPath = await minioClient.presignedGetObject('vehicle-images', filename2);
-            
-            const newImage = await saveImageToDB({ name, path,extraPath }); // Function to save in DB
-      
-            return newImage;
-          },
-      addUser: async (_, { name }) => {
-        return await userService.addUser(name);
+        const { error } = customerValidationSchema.validate(data);
+        if (error) {
+          throw new Error(`Validation error: ${error.details[0].message}`);
+        }
+        const hashedPassword = await bcrypt.hash(data.password, 10);
+        // Step 1: Handle image upload if provided
+        let image = null;
         
+        if (imageFile) {
+          const { createReadStream, filename } = await imageFile.promise;
+          const stream = createReadStream();
+        const filename1 = `customers/${data.name}/${filename}`
+  
+
+        const mimeType = mime.contentType(filename);
+  
+        // Upload to MinIO
+        await minioClient.putObject('vehicle-images', filename1, stream, {
+          'Content-Type': mimeType || 'application/octet-stream', // Adjust as needed
+        });
+  
+        // Save the image path and name to the database
+
+       image = await minioClient.presignedGetObject('vehicle-images', filename1);
+
+        }
+  
+        // Step 2: Update the customer in the database using Prisma
+        const updatedCustomer = await prisma.customer.update({
+          where: { id },
+          data: {
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            city: data.city,
+            state: data.state,
+            country: data.country,
+            pincode: data.pincode,
+            password: hashedPassword, // ensure password is hashed if needed
+            ...(image && { image }), // Update the image URL if an image was uploaded
+          },
+        });
+  
+        return updatedCustomer;
       },
-      updateUser: async (_, { id, name }) => {
-        return await userService.updateUser(id, name);
-        
-      },
+
       deleteUser: async (_, { id }) => {
         return await userService.deleteUser(id);
         
@@ -144,6 +115,7 @@ const userResolvers = {
             state: user.state,
             country: user.country,
             pincode: user.pincode,
+            role: user.role,
           },
         };
       },
