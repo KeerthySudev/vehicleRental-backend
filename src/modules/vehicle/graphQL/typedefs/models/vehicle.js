@@ -28,8 +28,21 @@ const vehicle = gql`
     secondaryImage: String
     availableQty: Int!
     isRentable: Boolean!
-    manufacturer: Manufacturer!  # Relation to Manufacturer
-    model: Model!  # Relation to Model
+    manufacturer: Manufacturer!  
+    model: Model!  
+  }
+
+  type VehicleTypesense {
+    id: ID!
+    name: String!
+    description: String!
+    price: Float!
+    primaryImage: String!
+    secondaryImage: String
+    availableQty: Int!
+    isRentable: Boolean!
+    manufacturerName: String!  
+    modelName: String!  
   }
   
 `;

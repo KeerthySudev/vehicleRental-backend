@@ -13,12 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// model User {
-//   id      Int      @id @default(autoincrement())
-//   name    String
-//   email   String   @unique
-//  }
-
 model Customer {
   id        Int   @id @default(autoincrement())
   name      String
@@ -67,22 +61,25 @@ model Model {
 }
 
 model Booking {
-  id               Int       @id @default(autoincrement())
-  startDate        DateTime
-  endDate          DateTime
-  status           String
-  pickUp           String
-  dropOff          String
-  paymentStatus    String    @default("pending")
-  amount           Float     
-  razorpayPaymentId  String?  
-  razorpaySignature  String? 
-  vehicle          Vehicle   @relation(fields: [vehicleId], references: [id])
-  vehicleId        Int
-  customer         Customer  @relation(fields: [customerId], references: [id])
-  customerId       Int
-  createdAt        DateTime  @default(now())
+  id                   Int      @id @default(autoincrement())
+  pickupDate           DateTime 
+  pickupTime           String
+  dropoffDate          DateTime 
+  dropoffTime          String  
+  status               String
+  pickupLocation       String
+  dropoffLocation      String
+  paymentStatus        String   @default("pending")
+  amount               Float     
+  razorpayPaymentId    String?  
+  razorpaySignature    String? 
+  vehicle              Vehicle   @relation(fields: [vehicleId], references: [id])
+  vehicleId            Int
+  customer             Customer  @relation(fields: [customerId], references: [id])
+  customerId           Int
+  createdAt            DateTime @default(now())
 }
+
 
 
 

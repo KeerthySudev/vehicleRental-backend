@@ -3,16 +3,20 @@ require('dotenv').config();
 const { ApolloServer } = require('apollo-server-express');
 const userSchema = require('./modules/user/graphQL/userSchema');
 const vehicleSchema = require('./modules/vehicle/graphQL/vehicleSchema');
+const bookingSchema = require('./modules/booking/graphQL/bookingSchema');
 const app = express();
 const { graphqlUploadExpress } = require('graphql-upload');
+const createCollection = require('././configs/typesenseConfig');
 
 
 const cors = require('cors');
 app.use(cors());
 app.use(graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
 
-const typeDefs = [userSchema.typeDefs, vehicleSchema.typeDefs];
-const resolvers = [userSchema.resolvers, vehicleSchema.resolvers];
+
+// createCollection();
+const typeDefs = [userSchema.typeDefs, vehicleSchema.typeDefs, bookingSchema.typeDefs];
+const resolvers = [userSchema.resolvers, vehicleSchema.resolvers, bookingSchema.resolvers];
 
 // Create Apollo Server
 const server = new ApolloServer({ typeDefs, resolvers });

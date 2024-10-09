@@ -12,6 +12,8 @@ extend type Query {
   getAllVehicles: [Vehicle!]!
   getAllRentableVehicles: [Vehicle!]!
   getVehicleById(id: Int!): Vehicle
+  searchVehicles(query: String!): [VehicleTypesense]
+  searchRentableVehicles(query: String!): [VehicleTypesense]
 }
 `;
 
