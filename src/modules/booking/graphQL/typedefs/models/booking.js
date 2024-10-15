@@ -18,11 +18,10 @@ const booking = gql`
     razorpayPaymentId: String
     razorpaySignature: String
     vehicle: Vehicle
-    customerId: Int!
+    customer: Customer
     createdAt: String!    # Storing createdAt as String in ISO format
   }
   
-
   input BookingInput {
     pickupDate: String!     
     pickupTime: String!     
@@ -44,7 +43,7 @@ const booking = gql`
 
   type Vehicle {
     id: ID!
-    name: String!
+    name: String! 
     description: String!
     price: Float!
     primaryImage: String!
@@ -53,6 +52,11 @@ const booking = gql`
     isRentable: Boolean!
     manufacturer: Manufacturer!  
     model: Model!  
+  }
+
+  type Customer {
+    id: ID!
+    name: String! 
   }
 
 `;

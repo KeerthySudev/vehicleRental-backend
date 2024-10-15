@@ -7,7 +7,15 @@ const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const mime = require('mime-types');
-const  minioClient  = require('../../../../configs/minioConfig');
+const  minioClient  = require('../../../../configs/minio/minioConfig');
+const bucket = process.env.MINIO_BUCKET;
+const minioPath = process.env.MINIO_PATH;
+const twilio = require('twilio');
+const accountSid = process.env.TWILIO_ACCOUNT_SID; // Replace with your Twilio Account SID
+const authToken = process.env.TWILIO_AUTH_TOKEN;   // Replace with your Twilio Auth Token
+const verifySid = process.env.TWILIO_VERIFY_SID; // Replace with your Verify Service SID
+
+const client = twilio(accountSid, authToken);
 
 
 // Define resolvers for your schema
@@ -36,6 +44,7 @@ const userResolvers = {
         let image = null;
         
         if (imageFile) {
+          console.log(imageFile);
           const { createReadStream, filename } = await imageFile.promise;
           const stream = createReadStream();
         const filename1 = `customers/${data.name}/${filename}`
@@ -44,13 +53,13 @@ const userResolvers = {
         const mimeType = mime.contentType(filename);
   
         // Upload to MinIO
-        await minioClient.putObject('vehicle-images', filename1, stream, {
+        await minioClient.putObject(bucket, filename1, stream, {
           'Content-Type': mimeType || 'application/octet-stream', // Adjust as needed
         });
   
         // Save the image path and name to the database
 
-       image = await minioClient.presignedGetObject('vehicle-images', filename1);
+       image = `${minioPath}/${bucket}/${filename1}`;
 
         }
   
@@ -76,6 +85,34 @@ const userResolvers = {
       deleteUser: async (_, { id }) => {
         return await userService.deleteUser(id);
         
+      },
+      validateCustomer: async (_, { customerInput }) => {
+        // Validate input with Joi
+        const { error } = customerValidationSchema.validate(customerInput);
+        if (error) {
+          throw new Error(`Validation error: ${error.details[0].message}`);
+        }
+        const existingUserByPhone = await prisma.customer.findUnique({
+          where: {
+            phone: customerInput.phone,
+          },
+        });
+      
+        if (existingUserByPhone) {
+          throw new Error('Phone number already exists');
+        }
+      
+        // Check if email already exists
+        const existingUserByEmail = await prisma.customer.findUnique({
+          where: {
+            email: customerInput.email,
+          },
+        });
+      
+        if (existingUserByEmail) {
+          throw new Error('Email already exists');
+        }
+        return true;
       },
       registerCustomer: async (_, { customerInput }) => {
         // Validate input with Joi
@@ -119,6 +156,37 @@ const userResolvers = {
           },
         };
       },
+
+
+
+      sendVerification: async (_, { phoneNumber }) => {
+        try {
+          const verification = await client.verify.v2.services(verifySid)
+            .verifications
+            .create({ to: phoneNumber, channel: 'sms' });
+          return verification.status; // Will return 'pending' if successful
+        } catch (error) {
+          throw new Error('Error sending verification code');
+        }
+      },
+  
+      // Mutation to verify the OTP code
+      verifyCode: async (_, { phoneNumber, code }) => {
+        try {
+          const verificationCheck = await client.verify.v2.services(verifySid)
+            .verificationChecks
+            .create({ to: phoneNumber, code });
+          
+          if (verificationCheck.status === 'approved') {
+            // Logic to update user as verified in your database can be added here
+            return 'Verification successful';
+          } else {
+            return 'Verification failed';
+          }
+        } catch (error) {
+          throw new Error('Error verifying code');
+        }
+      }
     },
 };
 

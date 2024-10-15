@@ -1,6 +1,6 @@
 
 const pool = require('../../../configs/dbConfig');
-const minioClient = require('../../../configs/minioConfig');
+const minioClient = require('../../../configs/minio/minioConfig');
 
 const getAllVehicles = async () => {
   const result = await pool.query('SELECT * FROM vehicles');
@@ -52,7 +52,7 @@ const uploadVehicleImage = async (fileStream, bucketName, objectName) => {
 
       fileStream.on('error', (err) => {
         console.error('Error reading file stream:', err);
-        reject(err);
+        reject(new Error(err));
       });
     });
   } catch (error) {

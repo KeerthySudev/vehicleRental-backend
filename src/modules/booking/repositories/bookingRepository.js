@@ -1,6 +1,6 @@
 
 const pool = require('../../../configs/dbConfig');
-const minioClient = require('../../../configs/minioConfig');
+const minioClient = require('../../../configs/minio/minioConfig');
 
 const getAllVehicles = async () => {
   const result = await pool.query('SELECT * FROM vehicles');

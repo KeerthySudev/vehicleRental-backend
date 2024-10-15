@@ -6,15 +6,12 @@ const vehicleSchema = require('./modules/vehicle/graphQL/vehicleSchema');
 const bookingSchema = require('./modules/booking/graphQL/bookingSchema');
 const app = express();
 const { graphqlUploadExpress } = require('graphql-upload');
-const createCollection = require('././configs/typesenseConfig');
 
 
 const cors = require('cors');
 app.use(cors());
 app.use(graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
 
-
-// createCollection();
 const typeDefs = [userSchema.typeDefs, vehicleSchema.typeDefs, bookingSchema.typeDefs];
 const resolvers = [userSchema.resolvers, vehicleSchema.resolvers, bookingSchema.resolvers];
 

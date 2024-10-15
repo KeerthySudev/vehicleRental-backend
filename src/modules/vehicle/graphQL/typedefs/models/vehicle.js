@@ -32,6 +32,13 @@ const vehicle = gql`
     model: Model!  
   }
 
+  input VehicleInput {
+    name: String!
+    description: String!
+    price: Float!
+    availableQty: Int!
+  }
+
   type VehicleTypesense {
     id: ID!
     name: String!

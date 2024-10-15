@@ -5,9 +5,12 @@ const bucket = process.env.MINIO_BUCKET;
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const mime = require('mime-types');
-const  minioClient  = require('../../../../configs/minioConfig');
-const  typesenseClient  = require('../../../../configs/typesenseConfig');
+const  minioClient  = require('../../../../configs/minio/minioConfig');
+const  typesenseClient  = require('../../../../configs/typesense/typesenseConfig');
 const manufacturerValidationSchema = require('../../requests/manufactureRequests');
+const ExcelJS = require('exceljs');
+const axios = require('axios');
+const minioPath = process.env.MINIO_PATH;
 
 const saveManufacturerToDB = async ({ name, image }) => {
   // Assuming you have a Prisma client instance already initialized
@@ -204,7 +207,7 @@ const vehicleResolvers = {
             // Filter only rentable vehicles with available quantity greater than 0
             .filter(vehicle => {
               console.log('Filtering vehicle:', vehicle); // Log each vehicle before filtering
-              return vehicle.availableQty > 0 && vehicle.isRentable == true;
+              return vehicle.availableQty > 0 && vehicle.isRentable;
             });
         
             // Log filtered results
@@ -215,6 +218,22 @@ const vehicleResolvers = {
             // Handle and log any errors
             console.error('Error searching vehicles:', error);
             throw new Error('Search failed. Please try again later.');
+          }
+        },
+        vehiclesSortedByPrice: async (_, { sortOrder = 'asc' }) => {
+          try {
+            const searchResults = await typesenseClient
+              .collections('vehicles')   // Use your Typesense collection
+              .documents()
+              .search({
+                q: '*',                   // Query all documents
+                sort_by: `price:${sortOrder}`,  // Sort by price
+              });
+    
+            // Return the search results in GraphQL-compatible format
+            return searchResults.hits.map(hit => hit.document);
+          } catch (error) {
+            throw new Error(error.message);
           }
         },
     },
@@ -232,7 +251,7 @@ const vehicleResolvers = {
         const updatedVehicle = await prisma.vehicle.update({
           where: { id: id },
           data: {
-            isRentable: !vehicle.isRentable, // Toggle true <-> false
+            isRentable: !vehicle.isRentable, 
           },
         });
 
@@ -291,12 +310,50 @@ const vehicleResolvers = {
         });
   
         // Save the image path and name to the database
-
-        const image = await minioClient.presignedGetObject(bucket, filename2);
+        const image = `${minioPath}/${bucket}/${filename2}`;
+        console.log(image);
         const newManufacturer = await saveManufacturerToDB({ name, image });
         return newManufacturer;
       },
 
+      importManufacturers: async (_, { file }) => {
+        const { createReadStream } = await file.promise;
+  
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.read(createReadStream());
+        const worksheet = workbook.getWorksheet(1); 
+  
+        const manufacturers = [];
+  
+        worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+          const name = row.getCell(1).value; 
+          const imageUrl = row.getCell(2).value; 
+  
+          manufacturers.push({ name, imageUrl });
+        });
+  
+        for (const { name, imageUrl } of manufacturers) {
+          // Download the image
+          const response = await axios.get(imageUrl, { responseType: 'stream' });
+          const imageStream = response.data;
+  
+  
+          const imagePath = `manufacturers/${name}.jpg`; // Change as needed
+          await minioClient.putObject(bucket, imagePath, imageStream, {
+          'Content-Type': 'jpg/jpeg/png' || 'application/octet-stream', // Adjust as needed
+        });
+   const image =  `${minioPath}/${bucket}/${imagePath}`;
+          // Save manufacturer data in the database
+          await prisma.manufacturer.create({
+            data: {
+              name,
+              image: image, // Construct the URL for the image
+            },
+          });
+        }
+  
+        return true;
+      },
       deleteManufacturer: async (_, { id }) => {
         // Fetch the manufacturer to get the image path before deleting the record
         const manufacturer = await prisma.manufacturer.findUnique({
@@ -343,26 +400,88 @@ const vehicleResolvers = {
         });
         return true; // Return true to indicate successful deletion
       },
+      updateVehicle: async (_, { id, data, primaryImageFile , secondaryImageFile}) => {
 
-      updateVehicle: async (_, { id, name, description, price, primaryImage, secondaryImage, availableQty, manufacturerId, modelId }) => {
-        return await prisma.vehicle.update({
+
+        // Step 1: Handle image upload if provided
+        let primaryImage = null;
+        let secondaryImage = null;
+        if (primaryImageFile) {
+         
+
+          const { createReadStream, filename } = await primaryImageFile.promise;
+          const stream = createReadStream();
+        const filename1 = `vehicles/${data.name}/${filename}`
+  
+
+        const mimeType = mime.contentType(filename);
+  
+        // Upload to MinIO
+        await minioClient.putObject(bucket, filename1, stream, {
+          'Content-Type': mimeType || 'application/octet-stream', // Adjust as needed
+        });
+  
+        // Save the image path and name to the database
+        primaryImage = `${minioPath}/${bucket}/${filename1}`;
+
+        }
+
+        if (secondaryImageFile) {
+          const { createReadStream, filename } = await secondaryImageFile.promise;
+          const stream = createReadStream();
+        const filename1 = `vehicles/${data.name}/${filename}`
+  
+
+        const mimeType = mime.contentType(filename);
+  
+        // Upload to MinIO
+        await minioClient.putObject(bucket, filename1, stream, {
+          'Content-Type': mimeType || 'application/octet-stream', // Adjust as needed
+        });
+  
+        // Save the image path and name to the database
+
+        secondaryImage = `${minioPath}/${bucket}/${filename1}`;
+
+        }
+  
+        // Step 2: Update the vehicle in the database using Prisma
+        const updatedVehicle = await prisma.vehicle.update({
           where: { id },
           data: {
-            name,
-            description,
-            price,
-            primaryImage,
-            secondaryImage,
-            availableQty,
-            manufacturer: {
-              connect: { id: manufacturerId }, 
-            },
-            model: {
-              connect: { id: modelId }, 
-            },
+            name: data.name,
+            description: data.description,
+            price: data.price,
+            availableQty: data.availableQty, // ensure password is hashed if needed
+            ...(primaryImage && { primaryImage }), 
+            ...(secondaryImage && { secondaryImage }), // Update the image URL if an image was uploaded
+          },
+          include: {
+            manufacturer: true,
+            model: true,
           },
         });
+        console.log("vehicle", updatedVehicle);
+
+
+        const updatedTypesenseDocument = {
+          id: String(updatedVehicle.id), // Convert id to string for Typesense
+          name: updatedVehicle.name,
+          description: updatedVehicle.description,
+          price: updatedVehicle.price,
+          availableQty: updatedVehicle.availableQty,
+          isRentable: updatedVehicle.isRentable, // Use updated value
+          primaryImage: updatedVehicle.primaryImage,
+          secondaryImage: updatedVehicle.secondaryImage,
+          manufacturerName: updatedVehicle.manufacturer.name , // Flattened
+          modelName: updatedVehicle.model.name ,               // Flattened
+        };
+    
+        await typesenseClient.collections('vehicles').documents().upsert(updatedTypesenseDocument);
+  
+        return updatedVehicle;
       },
+
       deleteVehicle: async (_, { id }) => {
         // Check if the vehicle exists
         const vehicle = await prisma.vehicle.findUnique({
@@ -432,7 +551,7 @@ const vehicleResolvers = {
   
         // Save the image path and name to the database
 
-        const primaryImage = await minioClient.presignedGetObject(bucket, filename1);
+        const primaryImage = `${minioPath}/${bucket}/${filename1}`;
 
         const { createReadStream: createReadStreamSecondary, filename: filenameSecondary } = await secondaryImageFile.promise;
   
@@ -449,7 +568,7 @@ const vehicleResolvers = {
   
         // Save the image path and name to the database
 
-        const secondaryImage = await minioClient.presignedGetObject(bucket, filename2);
+        const secondaryImage = `${minioPath}/${bucket}/${filename2}`;
         
         const newImage = await saveImageToDB({ name, description, price,  primaryImage, secondaryImage, availableQty, manufacturerId, modelId }); // Function to save in DB
   
