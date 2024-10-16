@@ -1,5 +1,5 @@
 
-const customerValidationSchema = require('../../requests/userRequests');
+const customerValidation = require('../../requests/userRequests');
 const userService = require('../../repositories/userRepository');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -7,24 +7,18 @@ const SECRET_KEY = process.env.SECRET_KEY || 'your_secret_key';
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const mime = require('mime-types');
-const  minioClient  = require('../../../../configs/minio/minioConfig');
-const bucket = process.env.MINIO_BUCKET;
-const minioPath = process.env.MINIO_PATH;
-const twilio = require('twilio');
-const accountSid = process.env.TWILIO_ACCOUNT_SID; // Replace with your Twilio Account SID
-const authToken = process.env.TWILIO_AUTH_TOKEN;   // Replace with your Twilio Auth Token
-const verifySid = process.env.TWILIO_VERIFY_SID; // Replace with your Verify Service SID
-
-const client = twilio(accountSid, authToken);
+const {
+  minioClient,
+  minioPath,
+  bucket,
+} = require("../../../../configs/minio/minioConfig");
+const {twilioClient, verifySid} = require('../../../../configs/twilio/twilioConfig');
 
 
 // Define resolvers for your schema
 const userResolvers = {
   Query: {
-    customers: async () => {
-      return await userService.getAllCustomers();
-    
-  },
+   
   customer: async (_, { id }) => {
     return await prisma.customer.findUnique({
       where: { id },
@@ -35,12 +29,12 @@ const userResolvers = {
     Mutation: {
       updateCustomer: async (_, { id, data, imageFile }) => {
 
-        const { error } = customerValidationSchema.validate(data);
+        const { error } = customerValidation.updateCustomerValidationSchema.validate(data);
         if (error) {
           throw new Error(`Validation error: ${error.details[0].message}`);
         }
-        const hashedPassword = await bcrypt.hash(data.password, 10);
-        // Step 1: Handle image upload if provided
+        // const hashedPassword = await bcrypt.hash(data.password, 10);
+
         let image = null;
         
         if (imageFile) {
@@ -74,21 +68,17 @@ const userResolvers = {
             state: data.state,
             country: data.country,
             pincode: data.pincode,
-            password: hashedPassword, // ensure password is hashed if needed
-            ...(image && { image }), // Update the image URL if an image was uploaded
+            // password: hashedPassword,
+            ...(image && { image }), 
           },
         });
   
         return updatedCustomer;
       },
 
-      deleteUser: async (_, { id }) => {
-        return await userService.deleteUser(id);
-        
-      },
       validateCustomer: async (_, { customerInput }) => {
         // Validate input with Joi
-        const { error } = customerValidationSchema.validate(customerInput);
+        const { error } = customerValidation.customerValidationSchema.validate(customerInput);
         if (error) {
           throw new Error(`Validation error: ${error.details[0].message}`);
         }
@@ -116,7 +106,7 @@ const userResolvers = {
       },
       registerCustomer: async (_, { customerInput }) => {
         // Validate input with Joi
-        const { error } = customerValidationSchema.validate(customerInput);
+        const { error } = customerValidation.customerValidationSchema.validate(customerInput);
         if (error) {
           throw new Error(`Validation error: ${error.details[0].message}`);
         }
@@ -161,7 +151,7 @@ const userResolvers = {
 
       sendVerification: async (_, { phoneNumber }) => {
         try {
-          const verification = await client.verify.v2.services(verifySid)
+          const verification = await twilioClient.verify.v2.services(verifySid)
             .verifications
             .create({ to: phoneNumber, channel: 'sms' });
           return verification.status; // Will return 'pending' if successful
@@ -173,7 +163,7 @@ const userResolvers = {
       // Mutation to verify the OTP code
       verifyCode: async (_, { phoneNumber, code }) => {
         try {
-          const verificationCheck = await client.verify.v2.services(verifySid)
+          const verificationCheck = await twilioClient.verify.v2.services(verifySid)
             .verificationChecks
             .create({ to: phoneNumber, code });
           

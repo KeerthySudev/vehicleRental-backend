@@ -21,6 +21,16 @@ scalar Upload
     password: String!
     confirmPassword: String!
   }
+
+  input UpdateCustomerInput {
+    name: String!
+    email: String!
+    phone: String!
+    city: String!
+    state: String!
+    country: String!
+    pincode: String!
+  }
   
   type Customer {
     id: ID!

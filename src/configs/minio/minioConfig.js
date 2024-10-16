@@ -10,4 +10,7 @@ const minioClient = new Minio.Client({
   secretKey: process.env.MINIO_SECRET_KEY,
 });
 
-module.exports = minioClient;
+const minioPath = process.env.MINIO_PATH;
+const bucket = process.env.MINIO_BUCKET;
+
+module.exports = {minioClient, minioPath, bucket};

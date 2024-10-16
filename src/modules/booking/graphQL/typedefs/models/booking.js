@@ -18,6 +18,7 @@ const booking = gql`
     razorpayPaymentId: String
     razorpaySignature: String
     vehicle: Vehicle
+    customerId: Int
     customer: Customer
     createdAt: String!    # Storing createdAt as String in ISO format
   }

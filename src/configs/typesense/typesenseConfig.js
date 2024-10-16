@@ -13,19 +13,6 @@ const client = new Typesense.Client({
 });
 
 
-// const schema = {
-//     'name': 'vehicles',
-//     'fields': [
-//       { 'name': 'name', 'type': 'string' },
-//       { 'name': 'manufacturer', 'type': 'string' },
-//       { 'name': 'model', 'type': 'string' },
-//       { 'name': 'price', 'type': 'float' },
-//       { 'name': 'pickupLocation', 'type': 'string' },
-//       { 'name': 'dropoffLocation', 'type': 'string' }
-//     ],
-//     'default_sorting_field': 'price'
-//   };
-
 const vehicleSchema = {
     name: 'vehicles', 
     fields: [
@@ -41,7 +28,6 @@ const vehicleSchema = {
 
       { name: 'modelName', type: 'string', facet: true },
   
-      // Sort by price or other fields
       { name: 'price', type: 'float', facet: true }
     ],
     default_sorting_field: 'price'
@@ -61,35 +47,10 @@ const vehicleSchema = {
 //     }
 //   });
 
-  const vehicle = {
-    id: '1',  // Every document needs a unique ID
-    name: 'SUV',
-    manufacturerName: 'Toyota',
-    modelName: 'Highlander',
-    price: 5000,
-    description: 'New York',
-    primaryImage: 'Los Angeles',
-    secondaryImage: 'Los Angeles',
-    isRentable: false,
-    availableQty:5,
-  };
-  
-  const createCollection = () => client.collections('vehicles').documents().create(vehicle)
-    .then(function(response) {
-      console.log(response);
-    })
-    .catch(function(error) {
-      console.error(error);
-    });
+ 
+
 
   module.exports = client;
 
-  
-//   client.collections().create(vehicleSchema)
-//     .then(function(response) {
-//       console.log(response);
-//     })
-//     .catch(function(error) {
-//       console.error(error);
-//     });
+
   
