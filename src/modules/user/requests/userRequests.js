@@ -24,4 +24,11 @@ const updateCustomerValidationSchema = Joi.object({
   pincode: Joi.string().length(6).required(),
 });
 
-module.exports = {customerValidationSchema, updateCustomerValidationSchema};
+const passwordValidationSchema = Joi.object({
+  newPassword: Joi.string().min(8).required(),
+  confirmPassword: Joi.string().valid(Joi.ref('newPassword')).required().messages({
+    'any.only': 'Passwords do not match',
+  }),
+});
+
+module.exports = {customerValidationSchema, updateCustomerValidationSchema, passwordValidationSchema};

@@ -1,28 +1,14 @@
 
-
-const vehicleService = require('../../repositories/bookingRepository');
-const bucket = process.env.MINIO_BUCKET;
+const BookingController = require("../../controllers/bookingController");
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const mime = require('mime-types');
-const  minioClient  = require('../../../../configs/minio/minioConfig');
-const manufacturerValidationSchema = require('../../requests/manufactureRequests');
-const crypto = require("crypto");
 const  typesenseClient  = require('../../../../configs/typesense/typesenseConfig');
-const fs = require('fs');
-const generateAllBookingsExcel  = require('../../../../configs/excel/excelConfig');
-const generateBookingPDF = require('../../../../configs/pdf/pdfConfig');
-const vehicle = require('../../../vehicle/graphQL/typedefs/models/vehicle');
 const razorpay = require('../../../../configs/razorpay/razorpayConfig')
 
-// const razorpay = new Razorpay({
-//   key_id: process.env.RAZORPAY_KEY_ID,
-//   key_secret: process.env.RAZORPAY_KEY_SECRET,
-// });
 
 const bookingResolvers = {
   Query: {
-    // Get all bookings
+    
     getAllBookings: async () => {
       try {
         const bookings = await prisma.booking.findMany({
@@ -41,22 +27,7 @@ const bookingResolvers = {
 
     // Get booking by its ID
     getBookingById: async (_, { id }) => {
-      try {
-        const booking = await prisma.booking.findUnique({
-          where: { id },
-          include: {
-            vehicle: true,
-            customer: true, 
-          },
-        });
-        if (!booking) {
-          throw new Error("Booking not found");
-        }
-        return booking;
-      } catch (error) {
-        console.error(`Error fetching booking with ID ${id}:`, error);
-        throw new Error("Error fetching booking");
-      }
+        return await BookingController.getBookingById(id);
     },
 
     // Get all bookings by user (customer) ID
@@ -86,60 +57,11 @@ const bookingResolvers = {
    
 
 exportBooking: async (_, { id }) => {
-  try {
-    const booking = await prisma.booking.findUnique({
-      where: { id },
-      include: {
-        customer: true, // Include customer details
-        vehicle: true,  // Include vehicle details
-      },
-    });
-    if (!booking) {
-      throw new Error('Booking not found');
-    }
-
-    // Generate the PDF for the single booking
-    const pdfBase64 = await generateBookingPDF(booking);
-
-    return pdfBase64; // Return the base64-encoded PDF
-  } catch (error) {
-    console.error('Error exporting booking as PDF:', error);
-    throw new Error('Failed to export booking as PDF.');
-  }
+  return await BookingController.exportBooking(id);
 },
 
     exportAllBookings: async () => {
-      try {
-        // Fetch the booking data for the given id
-        const booking = await prisma.booking.findMany({
-          include: {
-            vehicle: true, 
-            customer: true, 
-          },
-        });
-
-       
-
-        if (!booking) {
-          throw new Error('Booking not found');
-        }
-
-       
-        // Generate the Excel file for the single booking
-        const filePath = await generateAllBookingsExcel(booking);
-
-        // Read the file and convert to base64 to send via GraphQL
-        // const fileBuffer = fs.readFileSync(filePath);
-        const base64File = filePath.toString('base64');
-
-        // Optionally delete the file after reading
-        // fs.unlinkSync(filePath);
-
-        return base64File; // Return the base64 string
-      } catch (error) {
-        console.error('Error exporting booking:', error);
-        throw new Error('Failed to export booking.');
-      }
+      return await BookingController.exportAllBookings();
     },
   },
   Mutation: {
