@@ -35,6 +35,11 @@ const vehicleMutations = gql`
     importVehicles(file: Upload): Boolean!
 
     toggleRentable(id: Int!): Vehicle!
+
+    createTest(
+      name: String!
+      otherImageFiles: [Upload]
+    ): Test!
   }
 `;
 

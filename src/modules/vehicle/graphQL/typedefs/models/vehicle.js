@@ -52,6 +52,14 @@ const vehicle = gql`
     modelName: String!  
   }
   
+
+  type Test {
+    id: ID!
+    name: String!
+    otherImages: [String]
+  }
+
+
 `;
 
 module.exports = vehicle;

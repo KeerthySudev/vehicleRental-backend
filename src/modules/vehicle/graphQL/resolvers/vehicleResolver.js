@@ -33,6 +33,9 @@ const vehicleResolvers = {
     getAllRentableVehiclesSorted: async (_, { sortOrder = "asc" }) => {
       return await VehicleController.getAllRentableVehiclesSorted(sortOrder);
     },
+    getTestById: async (_, { id }) => {
+      return await VehicleController.getTestById({id});
+    },
   },
   Mutation: {
     toggleRentable: async (_, { id }) => {
@@ -100,7 +103,21 @@ const vehicleResolvers = {
         modelId,
       });
     },
+    createTest: async (
+      _,
+      {
+        name,
+        otherImageFiles,
+      }
+    ) => {
+      return await VehicleController.createTest({
+        name,
+        otherImageFiles,
+      });
+    },
+
   },
+
 };
 
 module.exports = vehicleResolvers;

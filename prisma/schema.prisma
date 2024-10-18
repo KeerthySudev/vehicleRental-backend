@@ -42,14 +42,21 @@ model Vehicle {
   model          Model         @relation(fields: [modelId], references: [id], onDelete: Cascade)
   modelId        Int
   bookings   Booking[]
+  otherImages  String[]
+}
+
+model Test{
+  id    Int      @id @default(autoincrement())
+  name  String
+otherImages  String[]
 }
 
 model Manufacturer {
   id       Int       @id @default(autoincrement())
   name     String
   image    String
-  vehicles Vehicle[] // This field creates the reverse relation to Vehicle
-  models   Model[]   // This field creates the reverse relation to Model
+  vehicles Vehicle[] 
+  models   Model[]   
 }
 
 model Model {

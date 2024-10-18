@@ -123,6 +123,7 @@ class VehicleController {
     price,
     primaryImageFile,
     secondaryImageFile,
+   
     availableQty,
     manufacturerId,
     modelId,
@@ -246,13 +247,13 @@ class VehicleController {
       });
       const secondaryImageStream = response.data;
 
-      const secondaryImagePath = `vehicles/${name}/${name}.jpg`; // Change as needed
+      const secondaryImagePath = `vehicles/${name}/${name}.jpg`; 
       await minioClient.putObject(
         bucket,
         secondaryImagePath,
         secondaryImageStream,
         {
-          "Content-Type": "jpg/jpeg/png" || "application/octet-stream", // Adjust as needed
+          "Content-Type": "jpg/jpeg/png" || "application/octet-stream", 
         }
       );
       const secondaryImage = `${minioPath}/${bucket}/${secondaryImagePath}`;
@@ -390,6 +391,51 @@ class VehicleController {
       secondaryImage,
     });
   }
+
+  static async createTest({
+    name,
+    otherImageFiles
+  }) {
+
+    let otherImages = [];
+    if (otherImageFiles && otherImageFiles.length > 0) {
+      otherImages = await Promise.all(
+        otherImageFiles.map(async (file) => {
+          const {
+            createReadStream: createReadStreamPrimary,
+            filename: filenamePrimary,
+          } = await file.promise;
+      
+          // Upload file to MinIO
+          const streamPrimary = createReadStreamPrimary();
+          const mimeTypePrimary = mime.contentType(filenamePrimary);
+      
+          const filename1 = `test/${name}/${filenamePrimary}`;
+      
+          // Upload to MinIO
+          await minioClient.putObject(bucket, filename1, streamPrimary, {
+            "Content-Type": mimeTypePrimary || "application/octet-stream", // Adjust as needed
+          });
+      
+          // Save the image path and name to the database
+      
+          const image = `${minioPath}/${bucket}/${filename1}`;
+          return image;
+        })
+      );
+    }
+
+    const newVehicle = await VehicleRepository.createTest({
+      name,
+      otherImages
+    });
+    return newVehicle;
+  }
+  static async getTestById({id}) {
+    const vehicleId = id;
+    return await VehicleRepository.getTestById({id});
+  }
+
 }
 
 module.exports = VehicleController;
