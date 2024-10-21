@@ -32,11 +32,30 @@ const vehicle = gql`
     model: Model!  
   }
 
+  type VehicleTest {
+    id: ID!
+    name: String!
+    gear: String
+    fuelType: String
+    seats: Int
+    description: String!
+    price: Float!
+    primaryImage: String!
+    availableQty: Int!
+    isRentable: Boolean!
+    manufacturer: Manufacturer!  
+    model: Model! 
+    otherImages: [String] 
+  }
+
   input VehicleInput {
     name: String!
     description: String!
     price: Float!
     availableQty: Int!
+    gear: String
+    fuelType: String
+    seats: Int
   }
 
   type VehicleTypesense {

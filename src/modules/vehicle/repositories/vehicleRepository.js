@@ -79,10 +79,13 @@ class VehicleRepository {
     description,
     price,
     primaryImage,
-    secondaryImage,
+    otherImages,
     availableQty,
     manufacturerId,
     modelId,
+    seats,
+        gear,
+        fuelType,
   }) {
     const foundManufacturer = await prisma.manufacturer.findUnique({
       where: { id: manufacturerId },
@@ -106,14 +109,17 @@ class VehicleRepository {
         description,
         price,
         primaryImage,
-        secondaryImage,
+        otherImages,
         availableQty,
         manufacturerId,
         modelId,
+        seats,
+        gear,
+        fuelType,
       },
       include: {
-        manufacturer: true, // Include the manufacturer
-        model: true, // Include the model
+        manufacturer: true, 
+        model: true, 
       },
     });
 
@@ -127,7 +133,7 @@ class VehicleRepository {
         manufacturerName: foundManufacturer.name, // Include manufacturer name
         modelName: foundModel.name, // Include model name
         primaryImage: newVehicle.primaryImage,
-        secondaryImage: newVehicle.secondaryImage,
+        secondaryImage: null,
         isRentable: false,
       };
 
@@ -377,23 +383,27 @@ class VehicleRepository {
     }
   }
 
-  static async updateVehicle({ id, data, primaryImage, secondaryImage }) {
+  static async updateVehicle({ id, data, primaryImage, otherImages }) {
+    console.log("data", primaryImage, otherImages);
     const updatedVehicle = await prisma.vehicle.update({
       where: { id },
       data: {
         name: data.name,
         description: data.description,
         price: data.price,
-        availableQty: data.availableQty, // ensure password is hashed if needed
+        availableQty: data.availableQty,
+        seats: data.seats,
+        fuelType: data.fuelType,
+        gear: data.gear,
         ...(primaryImage && { primaryImage }),
-        ...(secondaryImage && { secondaryImage }), // Update the image URL if an image was uploaded
+        ...(otherImages && { otherImages }), // Update the image URL if an image was uploaded
       },
       include: {
         manufacturer: true,
         model: true,
       },
     });
-    console.log("vehicle", updatedVehicle);
+    console.log("repo", updatedVehicle);
 
     const updatedTypesenseDocument = {
       id: String(updatedVehicle.id), // Convert id to string for Typesense

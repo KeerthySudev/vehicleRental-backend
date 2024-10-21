@@ -1,5 +1,5 @@
 const VehicleRepository = require("../repositories/vehicleRepository");
-const manufacturerValidationSchema = require("../requests/manufactureRequests");
+const VehicleRequests = require("../requests/vehicleRequests");
 const mime = require("mime-types");
 const {
   minioClient,
@@ -31,16 +31,7 @@ class VehicleController {
   }
 
   static async createManufacturer({ name, imageFile }) {
-    // Validate input
-    const { error } = manufacturerValidationSchema.validate({
-      name,
-      imageFile,
-    });
-    if (error) {
-      throw new Error(
-        `Validation Error: ${error.details.map((x) => x.message).join(", ")}`
-      );
-    }
+
 
     // Process file upload to MinIO
     const { createReadStream: createReadStream1, filename: filename1 } =
@@ -122,12 +113,31 @@ class VehicleController {
     description,
     price,
     primaryImageFile,
-    secondaryImageFile,
-   
+    otherImageFiles,
     availableQty,
     manufacturerId,
     modelId,
+    seats,
+        gear,
+        fuelType,
   }) {
+ const data= { name,
+  description,
+  price,
+  primaryImageFile,
+  otherImageFiles,
+  availableQty,
+  manufacturerId,
+  modelId,
+  seats,
+      gear,
+      fuelType}
+
+      const schema = VehicleRequests.vehicleValidationSchema();
+    const { error} = schema.validate(data);
+  if (error) {
+    throw new Error(`${error.details[0].message}`);
+  }
     const {
       createReadStream: createReadStreamPrimary,
       filename: filenamePrimary,
@@ -148,35 +158,47 @@ class VehicleController {
 
     const primaryImage = `${minioPath}/${bucket}/${filename1}`;
 
-    const {
-      createReadStream: createReadStreamSecondary,
-      filename: filenameSecondary,
-    } = await secondaryImageFile.promise;
 
-    // Upload file to MinIO
-    const streamSecondary = createReadStreamSecondary();
-    const mimeTypeSecondary = mime.contentType(filenameSecondary);
-
-    const filename2 = `vehicles/${name}/${filenameSecondary}`;
-
-    // Upload to MinIO
-    await minioClient.putObject(bucket, filename2, streamSecondary, {
-      "Content-Type": mimeTypeSecondary || "application/octet-stream", // Adjust as needed
-    });
-
-    // Save the image path and name to the database
-
-    const secondaryImage = `${minioPath}/${bucket}/${filename2}`;
+        let otherImages = [];
+    if (otherImageFiles && otherImageFiles.length > 0) {
+      otherImages = await Promise.all(
+        otherImageFiles.map(async (file) => {
+          const {
+            createReadStream: createReadStreamPrimary,
+            filename: filenamePrimary,
+          } = await file.promise;
+      
+          // Upload file to MinIO
+          const streamPrimary = createReadStreamPrimary();
+          const mimeTypePrimary = mime.contentType(filenamePrimary);
+      
+          const filename1 = `vehicles/${name}/${filenamePrimary}`;
+      
+          // Upload to MinIO
+          await minioClient.putObject(bucket, filename1, streamPrimary, {
+            "Content-Type": mimeTypePrimary || "application/octet-stream", // Adjust as needed
+          });
+      
+          // Save the image path and name to the database
+      
+          const image = `${minioPath}/${bucket}/${filename1}`;
+          return image;
+        })
+      );
+    }
 
     const newVehicle = await VehicleRepository.createVehicle({
       name,
       description,
       price,
       primaryImage,
-      secondaryImage,
+      otherImages,
       availableQty,
       manufacturerId,
       modelId,
+      seats,
+        gear,
+        fuelType,
     });
     return newVehicle;
   }
@@ -197,9 +219,12 @@ class VehicleController {
       const availableQty = row.getCell(4).value;
       const manufacturer = row.getCell(5).value;
       const model = row.getCell(6).value;
-      const primaryImageUrl = row.getCell(7).value;
-      const secondaryImageUrl = row.getCell(8).value;
-
+      const seats = row.getCell(7).value;
+      const gear = row.getCell(8).value;
+      const fuelType = row.getCell(9).value;
+      const primaryImageUrl = row.getCell(10).value;
+      const otherImagesUrl = row.getCell(11).value;
+      console.log("url", otherImagesUrl);
       vehicles.push({
         name,
         description,
@@ -207,8 +232,11 @@ class VehicleController {
         availableQty,
         manufacturer,
         model,
+        seats,
+        gear,
+        fuelType,
         primaryImageUrl,
-        secondaryImageUrl,
+        otherImagesUrl,
       });
     });
 
@@ -219,16 +247,19 @@ class VehicleController {
       availableQty,
       manufacturer,
       model,
-      primaryImageUrl,
-      secondaryImageUrl,
+      seats,
+        gear,
+        fuelType,
+        primaryImageUrl,
+        otherImagesUrl,
     } of vehicles) {
-      console.log(manufacturer);
+      
       const response1 = await axios.get(primaryImageUrl, {
         responseType: "stream",
       });
 
       const primaryImageStream = response1.data;
-      console.log(primaryImageStream);
+
       const primaryImagePath = `vehicles/${name}/${name}.jpg`; // Change as needed
       await minioClient.putObject(
         bucket,
@@ -239,25 +270,34 @@ class VehicleController {
         }
       );
       const primaryImage = `${minioPath}/${bucket}/${primaryImagePath}`;
-      console.log(primaryImage);
 
-      // Download the image
-      const response = await axios.get(secondaryImageUrl, {
-        responseType: "stream",
-      });
-      const secondaryImageStream = response.data;
-
-      const secondaryImagePath = `vehicles/${name}/${name}.jpg`; 
-      await minioClient.putObject(
-        bucket,
-        secondaryImagePath,
-        secondaryImageStream,
-        {
-          "Content-Type": "jpg/jpeg/png" || "application/octet-stream", 
-        }
+     
+      let otherImages = [];
+      const formattedOtherImagesUrl = otherImagesUrl.replace(/'/g, '"'); 
+      const otherImagesArray = JSON.parse(formattedOtherImagesUrl);
+      otherImages = await Promise.all(
+        otherImagesArray.map(async (primaryImageUrl) => {
+          const response1 = await axios.get(primaryImageUrl, {
+            responseType: "stream",
+          });
+    
+          const primaryImageStream = response1.data;
+          console.log(primaryImageStream);
+          const primaryImagePath = `vehicles/${name}/${name}.jpg`; // Change as needed
+          await minioClient.putObject(
+            bucket,
+            primaryImagePath,
+            primaryImageStream,
+            {
+              "Content-Type": "jpg/jpeg/png" || "application/octet-stream", // Adjust as needed
+            }
+          );
+          const primaryImage = `${minioPath}/${bucket}/${primaryImagePath}`;
+    
+          return primaryImage;
+        })
       );
-      const secondaryImage = `${minioPath}/${bucket}/${secondaryImagePath}`;
-      console.log(secondaryImage);
+      console.log(otherImages);
       const modelData = await VehicleRepository.getModelByName({ model });
 
       console.log(modelData);
@@ -273,8 +313,11 @@ class VehicleController {
         name,
         description,
         price,
+        seats,
+        gear,
+        fuelType,
         primaryImage,
-        secondaryImage,
+        otherImages,
         availableQty,
         manufacturerId,
         modelId,
@@ -346,10 +389,17 @@ class VehicleController {
     id,
     data,
     primaryImageFile,
-    secondaryImageFile,
+    otherImageFiles,
   }) {
+
+    
+          const schema = VehicleRequests.updateVehicleValidationSchema();
+        const { error} = schema.validate(data);
+      if (error) {
+        throw new Error(`${error.details[0].message}`);
+      }
+
     let primaryImage = null;
-    let secondaryImage = null;
     if (primaryImageFile) {
       const { createReadStream, filename } = await primaryImageFile.promise;
       const stream = createReadStream();
@@ -366,29 +416,42 @@ class VehicleController {
       primaryImage = `${minioPath}/${bucket}/${filename1}`;
     }
 
-    if (secondaryImageFile) {
-      const { createReadStream, filename } = await secondaryImageFile.promise;
-      const stream = createReadStream();
-      const filename1 = `vehicles/${data.name}/${filename}`;
-
-      const mimeType = mime.contentType(filename);
-
-      // Upload to MinIO
-      await minioClient.putObject(bucket, filename1, stream, {
-        "Content-Type": mimeType || "application/octet-stream", // Adjust as needed
-      });
-
-      // Save the image path and name to the database
-
-      secondaryImage = `${minioPath}/${bucket}/${filename1}`;
+    let otherImages = null;
+    if (otherImageFiles && otherImageFiles.length > 0) {
+      otherImages = [];
+      otherImages = await Promise.all(
+        otherImageFiles.map(async (file) => {
+          const {
+            createReadStream: createReadStreamPrimary,
+            filename: filenamePrimary,
+          } = await file.promise;
+      
+          // Upload file to MinIO
+          const streamPrimary = createReadStreamPrimary();
+          const mimeTypePrimary = mime.contentType(filenamePrimary);
+      
+          const filename1 = `vehicles/${data.name}/${filenamePrimary}`;
+      
+          // Upload to MinIO
+          await minioClient.putObject(bucket, filename1, streamPrimary, {
+            "Content-Type": mimeTypePrimary || "application/octet-stream", // Adjust as needed
+          });
+      
+          // Save the image path and name to the database
+      
+          const image = `${minioPath}/${bucket}/${filename1}`;
+          return image;
+        })
+      );
     }
+
 
     // Step 2: Update the vehicle in the database using Prisma
     return await VehicleRepository.updateVehicle({
       id,
       data,
       primaryImage,
-      secondaryImage,
+      otherImages,
     });
   }
 

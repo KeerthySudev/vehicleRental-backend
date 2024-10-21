@@ -41,6 +41,9 @@ model Vehicle {
   manufacturerId Int
   model          Model         @relation(fields: [modelId], references: [id], onDelete: Cascade)
   modelId        Int
+  seats          Int?
+  fuelType       String?
+  gear           String?
   bookings   Booking[]
   otherImages  String[]
 }

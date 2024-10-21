@@ -65,13 +65,13 @@ const vehicleResolvers = {
     },
     updateVehicle: async (
       _,
-      { id, data, primaryImageFile, secondaryImageFile }
+      { id, data, primaryImageFile, otherImageFiles }
     ) => {
       return await VehicleController.updateVehicle({
         id,
         data,
         primaryImageFile,
-        secondaryImageFile,
+        otherImageFiles,
       });
     },
 
@@ -86,10 +86,13 @@ const vehicleResolvers = {
         description,
         price,
         primaryImageFile,
-        secondaryImageFile,
+        otherImageFiles,
         availableQty,
         manufacturerId,
         modelId,
+        seats,
+        gear,
+        fuelType,
       }
     ) => {
       return await VehicleController.createVehicle({
@@ -97,10 +100,13 @@ const vehicleResolvers = {
         description,
         price,
         primaryImageFile,
-        secondaryImageFile,
+        otherImageFiles,
         availableQty,
         manufacturerId,
         modelId,
+        seats,
+        gear,
+        fuelType,
       });
     },
     createTest: async (

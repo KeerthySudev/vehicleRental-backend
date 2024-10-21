@@ -139,7 +139,7 @@ exportBooking: async (_, { id }) => {
       // Fetch the vehicle associated with the booking
       const booking = await prisma.booking.findUnique({
         where: { id },
-        select: { vehicle: { select: { id: true, availableQty: true, name: true, description: true, price: true, manufacturer: true, model: true, primaryImage: true, secondaryImage: true, isRentable: true } } },
+        select: { vehicle: { select: { id: true, availableQty: true, name: true, description: true, price: true, manufacturer: true, model: true, primaryImage: true,  isRentable: true } } },
       });
 
       if (!booking.vehicle) {

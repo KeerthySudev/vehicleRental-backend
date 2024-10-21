@@ -14,21 +14,24 @@ const vehicleMutations = gql`
 
     createVehicle(
       name: String!
+      gear: String
+    fuelType: String
+    seats: Int
       description: String!
       price: Float!
       primaryImageFile: Upload!
-      secondaryImageFile: Upload
       availableQty: Int!
       manufacturerId: Int!
       modelId: Int!
-    ): Vehicle!
+      otherImageFiles: [Upload]
+    ): VehicleTest!
 
     updateVehicle(
       id: Int!
       data: VehicleInput
       primaryImageFile: Upload
-      secondaryImageFile: Upload
-    ): Vehicle!
+      otherImageFiles: [Upload]
+    ): VehicleTest!
 
     deleteVehicle(id: Int!): Boolean!
     

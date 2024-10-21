@@ -1,5 +1,5 @@
 const UserRepository = require("../repositories/userRepository");
-const customerValidation = require("../requests/userRequests");
+const UserRequests = require("../requests/userRequests");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const SECRET_KEY = process.env.SECRET_KEY || "your_secret_key";
@@ -16,10 +16,10 @@ const {
 
 class UserController {
   static async validateCustomer(customerInput) {
-    const { error } =
-      customerValidation.customerValidationSchema.validate(customerInput);
+    const schema = UserRequests.customerValidationSchema();
+    const { error } = schema.validate(customerInput);
     if (error) {
-      throw new Error(`Validation error: ${error.details[0].message}`);
+      throw new Error(`${error.details[0].message}`);
     }
     const existingUserByPhone = await UserRepository.getCustomerByPhone(
       customerInput.phone
@@ -40,10 +40,10 @@ class UserController {
   }
 
   static async registerCustomer(customerInput) {
-    const { error } =
-      customerValidation.customerValidationSchema.validate(customerInput);
+    const schema = UserRequests.customerValidationSchema();
+    const { error } = schema.validate(customerInput);
     if (error) {
-      throw new Error(`Validation error: ${error.details[0].message}`);
+      throw new Error(`${error.details[0].message}`);
     }
     const hashedPassword = await bcrypt.hash(customerInput.password, 10);
     return await UserRepository.registerCustomer(customerInput, hashedPassword);
@@ -85,10 +85,10 @@ class UserController {
     };
   }
   static async updateCustomer({ id, data, imageFile }) {
-    const { error } =
-      customerValidation.updateCustomerValidationSchema.validate(data);
+    const schema = UserRequests.updateCustomerValidationSchema();
+    const { error } = schema.validate(data);
     if (error) {
-      throw new Error(`Validation error: ${error.details[0].message}`);
+      throw new Error(`${error.details[0].message}`);
     }
 
     let image = null;
@@ -127,11 +127,10 @@ class UserController {
     }
 
     const data = { newPassword, confirmPassword };
-
-    const { error } =
-      customerValidation.passwordValidationSchema.validate(data);
+const schema = UserRequests.passwordValidationSchema();
+    const { error } = schema.validate(data);
     if (error) {
-      throw new Error(`Validation error: ${error.details[0].message}`);
+      throw new Error(`${error.details[0].message}`);
     }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     return await UserRepository.updatePassword({ id, hashedPassword });

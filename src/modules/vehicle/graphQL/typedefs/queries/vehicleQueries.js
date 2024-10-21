@@ -7,7 +7,7 @@ const vehicleQueries = gql`
     getModelsByManufacturer(manufacturerId: Int!): [Model!]!
     getAllVehicles: [Vehicle!]!
     getAllRentableVehicles: [Vehicle!]!
-    getVehicleById(id: Int!): Vehicle
+    getVehicleById(id: Int!): VehicleTest
     searchVehicles(query: String!): [VehicleTypesense]
     searchRentableVehicles(query: String!): [VehicleTypesense]
     getAllRentableVehiclesSorted(sortOrder: String): [VehicleTypesense!]!
