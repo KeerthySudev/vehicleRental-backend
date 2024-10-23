@@ -73,13 +73,6 @@ class UserController {
       token,
       user: {
         id: user.id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        city: user.city,
-        state: user.state,
-        country: user.country,
-        pincode: user.pincode,
         role: user.role,
       },
     };

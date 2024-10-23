@@ -7,7 +7,12 @@ scalar Upload
 
   type LoginResponse {
     token: String
-    user: Customer
+    user: CustomerLogin
+  }
+
+  type CustomerLogin {
+    id: ID!
+    role: String!
   }
 
   input CustomerInput {
