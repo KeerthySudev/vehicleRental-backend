@@ -83,9 +83,9 @@ model Booking {
   amount               Float     
   razorpayPaymentId    String?  
   razorpaySignature    String? 
-  vehicle              Vehicle   @relation(fields: [vehicleId], references: [id])
+  vehicle              Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   vehicleId            Int
-  customer             Customer  @relation(fields: [customerId], references: [id])
+  customer             Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   customerId           Int
   createdAt            DateTime @default(now())
 }

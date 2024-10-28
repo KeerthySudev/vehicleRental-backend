@@ -39,10 +39,6 @@ const vehicleMutations = gql`
 
     toggleRentable(id: Int!): Vehicle!
 
-    createTest(
-      name: String!
-      otherImageFiles: [Upload]
-    ): Test!
   }
 `;
 

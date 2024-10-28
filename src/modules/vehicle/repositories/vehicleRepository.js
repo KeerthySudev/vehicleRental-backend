@@ -426,27 +426,6 @@ class VehicleRepository {
     return updatedVehicle;
   }
 
-  static async createTest({
-    name,
-otherImages
-  }) {
-
-    const newVehicle = await prisma.test.create({
-      data: {
-        name,
-        otherImages,
-      },
-    });
-
-    return newVehicle;
-  }
-
-  static async getTestById({id}) {
-    console.log("id", id);
-    return await prisma.test.findUnique({
-      where: { id },
-    });
-  }
 }
 
 module.exports = VehicleRepository;

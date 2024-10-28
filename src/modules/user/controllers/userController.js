@@ -1,3 +1,11 @@
+/**
+ * User Controller
+ *
+ * Handles user-related operations, including validation, registration, login, and updates.
+ *
+ * @module UserController
+ */
+
 const UserRepository = require("../repositories/userRepository");
 const UserRequests = require("../requests/userRequests");
 const bcrypt = require("bcrypt");
@@ -15,6 +23,15 @@ const {
 } = require("../../../configs/twilio/twilioConfig");
 
 class UserController {
+
+
+  /**
+   * Validates customer input data.
+   *
+   * @async
+   * @param {object} customerInput - Customer data
+   * @returns {boolean} True if valid, throws Error otherwise
+   */
   static async validateCustomer(customerInput) {
     const schema = UserRequests.customerValidationSchema();
     const { error } = schema.validate(customerInput);
@@ -39,6 +56,14 @@ class UserController {
     return true;
   }
 
+
+  /**
+   * Registers a new customer.
+   *
+   * @async
+   * @param {object} customerInput - Customer data
+   * @returns {object} Registered customer data
+   */
   static async registerCustomer(customerInput) {
     const schema = UserRequests.customerValidationSchema();
     const { error } = schema.validate(customerInput);
@@ -49,10 +74,26 @@ class UserController {
     return await UserRepository.registerCustomer(customerInput, hashedPassword);
   }
 
+
+  /**
+   * Retrieves a customer by their ID.
+   *
+   * @async
+   * @param {number} id - Customer ID
+   * @returns {object} Customer data
+   */
   static async getCustomerById(id) {
     return await UserRepository.getCustomerById(id);
   }
 
+
+  /**
+   * Login - Authenticates a customer and returns a JWT token.
+   *
+   * @async
+   * @param {object} credentials - Email and password
+   * @returns {object} Token and user data
+   */
   static async login({ email, password }) {
     const user = await UserRepository.getCustomer(email);
 
@@ -77,6 +118,16 @@ class UserController {
       },
     };
   }
+
+
+  /**
+   * Updates a customer's data.
+   *
+   * @async
+   * @param {object} data - Updated customer data
+   * @param {file} imageFile - Optional image file
+   * @returns {object} Updated customer data
+   */
   static async updateCustomer({ id, data, imageFile }) {
     const schema = UserRequests.updateCustomerValidationSchema();
     const { error } = schema.validate(data);
@@ -107,6 +158,14 @@ class UserController {
     return await UserRepository.updateCustomer({ id, data, image });
   }
 
+
+  /**
+   * Updates a customer's password.
+   *
+   * @async
+   * @param {object} data - Password change data
+   * @returns {boolean} True if successful
+   */
   static async changePassword({ id, password, newPassword, confirmPassword }) {
     const user = await UserRepository.getCustomerById(id);
 
@@ -120,7 +179,7 @@ class UserController {
     }
 
     const data = { newPassword, confirmPassword };
-const schema = UserRequests.passwordValidationSchema();
+    const schema = UserRequests.passwordValidationSchema();
     const { error } = schema.validate(data);
     if (error) {
       throw new Error(`${error.details[0].message}`);
@@ -129,6 +188,14 @@ const schema = UserRequests.passwordValidationSchema();
     return await UserRepository.updatePassword({ id, hashedPassword });
   }
 
+
+  /**
+   * Sends a verification code to a customer's phone.
+   *
+   * @async
+   * @param {string} phoneNumber - Customer phone number
+   * @returns {string} Verification status
+   */
   static async sendVerification(phoneNumber) {
     try {
       const verification = await twilioClient.verify.v2
@@ -140,6 +207,14 @@ const schema = UserRequests.passwordValidationSchema();
     }
   }
 
+  
+  /**
+   * Verifies a customer's verification code.
+   *
+   * @async
+   * @param {object} data - Verification code data
+   * @returns {string} Verification result
+   */
   static async verifyCode({ phoneNumber, code }) {
     try {
       const verificationCheck = await twilioClient.verify.v2

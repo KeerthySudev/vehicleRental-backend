@@ -11,7 +11,6 @@ const vehicleQueries = gql`
     searchVehicles(query: String!): [VehicleTypesense]
     searchRentableVehicles(query: String!): [VehicleTypesense]
     getAllRentableVehiclesSorted(sortOrder: String): [VehicleTypesense!]!
-    getTestById(id: Int!): Test
   }
 `;
 
